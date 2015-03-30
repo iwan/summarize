@@ -1,0 +1,17 @@
+language: ruby
+cache: bundler
+
+rvm:
+  - jruby
+  - 1.9.3
+  - 2.2.x
+  - 2.1.x
+  - 2.0.0
+
+notifications:
+  email:
+    recipients:
+      - iwan.buetti@gmail.com
+    on_failure: change
+    on_success: never
+
