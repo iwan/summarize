@@ -5,33 +5,28 @@
 ## Migrazione del db
 
 Crea il database SQLite; un eventuale database preesistente viene cancellato:
-```
-#!bash
+```bash
 ruby migrations/create_unpaid_ratios.rb
 ```
 
 ## Caricamento di dati fittizzi
 
-```
-#!bash
+```bash
 ruby load_fake_data.rb
 ```
 
 ## Esecuzione e generazione di un file Excel
-
+bash
 ```
-#!bash
 ruby example_01.rb
 ```
 
 ## Interrogazione dei dati
-```
-#!bash
+```bash
 irb
 ```
 
-```
-#!ruby
+```ruby
 require_relative 'config/required'
 require_relative '../lib/summarize'
 include Summarize
