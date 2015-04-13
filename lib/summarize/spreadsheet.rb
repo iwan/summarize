@@ -43,9 +43,7 @@ module Summarize
       private
 
       def fill_cells(wsheet, name, row_offset=0)
-        puts "------ #{name}"
         @table.sheet[name].each do |cell|
-          puts "#{cell.row+row_offset}/#{cell.col}: #{cell.content}" if (cell.row+row_offset)<0 or cell.col<0
           wsheet[cell.row+row_offset, cell.col] = cell.content
           if cell.header?
             if cell.h_span>1
@@ -54,32 +52,8 @@ module Summarize
               wsheet.merge_cells(cell.row+row_offset, cell.col, cell.row+cell.v_span-1+row_offset, cell.col)    
             end
           end
-          # wsheet.row(cell.row).set_format(cell.col, format)
         end
       end
     end
-
-
-    # def to_spreadsheet(filename, sheetname="Sheet 1")
-    #   book = ::Spreadsheet::Workbook.new
-    #   wsheet = book.create_worksheet name: sheetname
-
-    #   format = ::Spreadsheet::Format.new :color=> :blue, :pattern_fg_color => :xls_color_13, :pattern => 1
-    #   # colors: see https://github.com/zdavatz/spreadsheet/blob/master/lib/spreadsheet/datatypes.rb
-
-    #   sheet.each do |cell|
-    #     wsheet[cell.row, cell.col] = cell.content
-    #     if cell.header?
-    #       if cell.h_span>1
-    #         wsheet.merge_cells(cell.row, cell.col, cell.row, cell.col+cell.h_span-1)
-    #       elsif cell.v_span>1
-    #         wsheet.merge_cells(cell.row, cell.col, cell.row+cell.v_span-1, cell.col)    
-    #       end
-    #     end
-    #     # wsheet.row(cell.row).set_format(cell.col, format)
-    #   end
-    #   book.write filename
-    # end
-
   end
 end
