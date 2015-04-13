@@ -1,10 +1,9 @@
 # Esempio d'uso
 
-# Uso
-
 ## Migrazione del db
 
 Crea il database SQLite; un eventuale database preesistente viene cancellato:
+
 ```bash
 ruby migrations/create_unpaid_ratios.rb
 ```
@@ -16,12 +15,13 @@ ruby load_fake_data.rb
 ```
 
 ## Esecuzione e generazione di un file Excel
-bash
+
 ```
 ruby example_01.rb
 ```
 
 ## Interrogazione dei dati
+
 ```bash
 irb
 ```
