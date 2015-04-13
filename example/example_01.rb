@@ -16,6 +16,8 @@ puts "operators   : #{operators.inspect}"
 puts "uses_for_8_9: #{uses_for_8_9.inspect}"  # uses_for_8_9: ["clienti_domestici", "condominio_uso_dom"]
 puts "areas       : #{areas.inspect}"
 
+puts "--------"
+
 uses = { clienti_domestici: "Clienti domestici" , condominio_uso_dom: "Condominio uso domestico" }
 areas = { aree_urbane: "Aree urbane", aree_non_urbane: "Aree non urbane", aree_totali: "Aree totali" }
 
@@ -164,21 +166,18 @@ options6 = {
 
 ar_relation = UnpaidRatio.where(market: UR_CAPTIVE)
 s = Table.new(ar_relation)
-s.summarize2 :table1, options1
-s.summarize2 :table2, options2
-s.summarize2 :table3, options3
-s.summarize2 :table4, options4
-s.summarize2 :table5, options5
-s.summarize2 :table6, options6
+s.summarize :table1, options1
+s.summarize :table2, options2
+s.summarize :table3, options3
+s.summarize :table4, options4
+s.summarize :table5, options5
+s.summarize :table6, options6
 
 
 # To workbook
-# book = s.spreadsheet.to_book("Foglio 2" => :table2)
-# book = s.spreadsheet.to_book("Foglio 1" => :table1, "Foglio 2" => :table2)
 book = s.spreadsheet.to_book("Foglio 1" => :table1, "Foglio 2" => :table2, "Foglio 3" => :table3, "Foglio 4" => :table4, "Foglio 5" => :table5, "Foglio 6" => :table6)
-book.write "workbook10.xls"
+book.write "workbook1.xls"
 
-exit
 
 # To worksheet
 book = ::Spreadsheet::Workbook.new

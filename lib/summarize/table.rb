@@ -15,7 +15,7 @@ module Summarize
       @orientation = Hash.new
     end
 
-    def summarize2(name, o)
+    def summarize(name, o)
       o.reverse_merge!(rows: {}, columns: {}, cells: {})
       read_options(name, o)
       @sheet[name] = Sheet.new
@@ -129,156 +129,7 @@ module Summarize
       end
     end
 
-    def summarize(name, o)
-      o.reverse_merge!(rows: {}, columns: {}, cells: {})
-      read_options(name, o)
-      count_columns(name)
-      count_rows(name)
 
-      @sheet[name] = Sheet.new
-
-
-      r_count = 0 # rows count
-      c_count = -1 # columns count
-
-      puts "-- @col_counts: #{@col_counts[name].inspect}"
-      puts "-- @row_counts: #{@row_counts[name].inspect}"
-
-      add_collections_label = true
-
-      horiz = @orientation[name].horizontal?
-
-      exit
-
-      # Bunga.new()
-      # HEADER
-      # dimension values rows:
-      columns_depth = @columns[name].size
-      columns_depth_plus = columns_depth + (horiz ? 1 : 0) # take into account the fact cells
-      rows_depth    = @rows[name].size
-      rows_depth_plus = rows_depth + (horiz ? 0 : 1) # take into account the fact cells
-
-      columns_depth.times do |row|
-        puts "-- row: #{row}"
-        if add_collections_label
-          (rows_depth-1).times{ @sheet[name].append HCell.new(r_count, c_count+=1, nil) } # le celle vuote all'incrocio degli header
-          @sheet[name].append HCell.new(r_count, c_count+=1, @columns[name][row].label)
-        else
-          rows_depth.times{ @sheet[name].append HCell.new(r_count, c_count+=1, nil) } # le celle vuote all'incrocio degli header
-        end
-
-        # --- inizio conteggio (metti in un metodo)
-        # TODO: aggiungi summaryi
-        set_repetitions = 1
-        span            = 1 
-
-        (0...row).each do |i|
-          set_repetitions *= @col_counts[name][i]
-        end
-
-        ((row+1)...columns_depth).each do |i|
-          span *= @col_counts[name][i]
-        end
-        span *= @facts[name].size if @orientation[name].horizontal?
-        # --- fine conteggio
-
-        puts "set_repetitions: #{set_repetitions.inspect}"
-        puts "span: #{span.inspect}"
-        puts "@columns: #{@columns[name].inspect}"
-
-        set_repetitions.times do |i|
-          @columns[name][row].each do |dim|
-            span.times do |j|
-              @sheet[name].append HCell.new(r_count, c_count+=1, dim.label, h_span: (j==0 ? span : 1))
-            end
-          end
-        end
-        r_count+=1
-        c_count =-1
-      end
-
-      # facts label rows:
-      if add_collections_label
-        @rows[name].each{|dim| @sheet[name].append HCell.new(r_count, c_count+=1, dim.label)}
-      else
-        rows_depth.times{ @sheet[name].append HCell.new(r_count, c_count+=1, nil) } # le celle vuote all'incrocio degli header
-      end
-      set_repetitions    = 1
-      (0...rows_depth).each do |i|
-        set_repetitions *= @col_counts[name][i]
-      end
-      set_repetitions.times do |i|
-        @facts[name].each do |fact|
-          @sheet[name].append HCell.new(r_count, c_count+=1, fact.label)
-        end
-      end
-      
-
-
-
-      # Fine della scrittura delle intestazioni
-
-      # Inzio scittura delle righe coi dati (e le relative intestazioni di riga)
-
-      rows = []
-      @rows[name].map(&:elements).each do |el| # el is a Dimension
-        rows = combine(rows, el)
-      end
-      if rows.empty?
-        rows = [[]]
-      else
-        r_count+=1
-        c_count =-1
-      end
-      
-      # rows is an array of array of Element objects
-
-      columns = []
-      @columns[name].map(&:elements).each do |el| # el is a Dimension
-        columns = combine(columns, el)
-      end
-      columns = [[]] if columns.empty?
-
-
-      rows.each_with_index do |r_arr, i| # r_arr is an array of Dimension obj
-        r_conditions = {}
-        r_arr.each_with_index do |r_el, j|
-          # header di riga
-          span = 1
-          # gestione degli span verticali
-          if i==0 || rows[i-1][j].name!=rows[i][j].name # cella diversa da quella immediatamente sopra
-            ((i+1)...rows.size).each do |z|
-              rows[z][j].name==rows[i][j].name ? span+=1 : break
-            end
-          end
-          
-          @sheet[name].append HCell.new(r_count, c_count+=1, r_el.label, v_span: span)
-          r_conditions[r_el.parent.name] = r_el.value if !r_el.is_summary
-        end
-        
-        columns.each do |c_arr| # c_arr is an array of Element
-          c_conditions = {}
-          c_arr.each do |c_el|
-            c_conditions[c_el.parent.name] = c_el.value if !c_el.is_summary
-          end
-          conditions = c_conditions.merge r_conditions
-          # puts "conditions: #{conditions.inspect}"
-          res = @ar_relation.where(conditions)
-          # @facts.each do |fact|
-          #   @sheet.append Cell.new(r_count, c_count+=1, res.sum(fact.value))
-          # end
-          @facts[name].each do |fact|
-            r = eval(fact.eval_string)
-            @sheet[name].append Cell.new(r_count, c_count+=1, r) # res.send(:sum, )
-
-            # res.sum(:revenue)
-            # res.sum(:revenue) / res.sum(:collected)
-          end
-        end
-        r_count+=1
-        c_count =-1
-      end
-    end
     
     private
 
@@ -347,5 +198,4 @@ module Summarize
       end
     end
   end
-
 end
