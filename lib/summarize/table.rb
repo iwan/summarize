@@ -4,7 +4,7 @@ module Summarize
     include Summarize::Spreadsheet
     attr_reader :rows, :columns, :facts, :sheet
 
-    def initialize(ar_relation)
+    def initialize(ar_relation, options={})
       @ar_relation = ar_relation
       @rows        = Hash.new
       @columns     = Hash.new
@@ -13,6 +13,8 @@ module Summarize
       @row_counts  = Hash.new
       @sheet       = Hash.new
       @orientation = Hash.new
+
+      @options = options.reverse_merge!(nan: :to_nil)
     end
 
     def summarize(name, o)
@@ -32,6 +34,7 @@ module Summarize
       hor = @orientation[name].horizontal?
 
       rows = []
+      # @rows[name] is a Rows object and keep an array of Dimension objects
       @rows[name].map(&:elements).each{|el| rows = combine(rows, el)} # el is a Dimension
       rows = [[]] if rows.empty?
       # rows is an array of array of Element objects (array of combination of Element objs)
@@ -49,14 +52,14 @@ module Summarize
         @columns[name].each.with_index do |dim, r|
           c = @rows[name].size - (hor ? 1 : 0)
           c = 0 if c<0
-          @sheet[name].append HCell.new(r, c, dim.label)
+          @sheet[name].append HColHCell.new(r, c, dim.label)
         end
 
         # "C", "D"
         @rows[name].each.with_index do |dim, c|
           r = @columns[name].size - (hor ? 0 : 1)
           r = 0 if r<0
-          @sheet[name].append HCell.new(r, c, dim.label)
+          @sheet[name].append HRowHCell.new(r, c, dim.label)
         end
       end
 
@@ -73,7 +76,7 @@ module Summarize
         end
         if !hor # write facts labels
           @facts[name].each.with_index do |fact, k|
-            @sheet[name].append HCell.new(r_offset+i*fact_size+k, r_arr.size, fact.label)
+            @sheet[name].append FactHCell.new(r_offset+i*fact_size+k, r_arr.size, fact.label)
           end
         end
       end
@@ -90,7 +93,7 @@ module Summarize
         end
         if hor # write facts labels
           @facts[name].each.with_index do |fact, k|
-            @sheet[name].append HCell.new(c_arr.size, c_offset+i*fact_size+k, fact.label)
+            @sheet[name].append FactHCell.new(c_arr.size, c_offset+i*fact_size+k, fact.label)
           end
         end
       end
@@ -100,19 +103,24 @@ module Summarize
 
       # fact values
       rows.each_with_index do |r_arr, i| # r_arr is an array of Dimension obj
+        # puts "--> #{r_arr.inspect}"
+        last_and_summary_row = false
         r_size = r_arr.size
         r_conditions = {}
-        r_arr.each_with_index do |r_el, ii|
+        r_arr.each do |r_el|
           r_conditions[r_el.parent.name] = r_el.value if !r_el.is_summary
+          last_and_summary_row = last_and_summary_row || (r_el.last && r_el.is_summary)
         end
-        
+
         columns.each_with_index do |c_arr, j| # r_arr is an array of Dimension obj
+        # puts "---> #{c_arr.inspect}"
+          last_and_summary_col = false
           c_size = c_arr.size
           c_conditions = {}
           c_arr.each do |c_el|
             c_conditions[c_el.parent.name] = c_el.value if !c_el.is_summary
-          end
-
+            last_and_summary_col = last_and_summary_col || (c_el.last && c_el.is_summary)
+         end
 
           conditions = c_conditions.merge r_conditions
           res = @ar_relation.where(conditions)
@@ -123,7 +131,12 @@ module Summarize
             c = c+1 if r_size.zero? && hor
             r = r+1 if c_size.zero? && !hor
             result = eval(fact.eval_string) # the relation must be 'res' !!!
-            @sheet[name].append Cell.new(r, c, result)
+            if @options[:nan]==:to_nil
+              result = result.nan? ? nil : result
+            end
+            cell = Cell.new(r, c, result, fact.style)
+            cell.last_and_summary = last_and_summary_row || last_and_summary_col
+            @sheet[name].append cell
           end
         end
       end
@@ -175,15 +188,17 @@ module Summarize
 
     def read_rows(tname, hash)
       @rows[tname] = Rows.new
-      hash.each do |name, v|
-        @rows[tname]    << Dimension.new(name, v[:set], summary: (v[:summary] || false), label: v[:label] || name)
+      last_key = hash.keys.last
+      hash.each_pair do |name, v|
+        @rows[tname]    << Dimension.new(name, v[:set], summary: (v[:summary] || false), label: v[:label] || name, last: name==last_key)
       end
     end
 
     def read_columns(tname, hash)
       @columns[tname] = Columns.new
-      hash.each do |name, v|
-        @columns[tname] << Dimension.new(name, v[:set], summary: (v[:summary] || false), label: v[:label] || name)
+      last_key = hash.keys.last
+      hash.each_pair do |name, v|
+        @columns[tname] << Dimension.new(name, v[:set], summary: (v[:summary] || false), label: v[:label] || name, last: name==last_key)
       end
     end
 
@@ -194,6 +209,7 @@ module Summarize
       hash.each_pair do |name, v|
         fact = Fact.new(name, v[:label] || name)
         fact.eval_string = v[:calc]
+        fact.style       = v[:style]
         @facts[tname] << fact
       end
     end

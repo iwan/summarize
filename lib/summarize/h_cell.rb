@@ -13,6 +13,11 @@ module Summarize
     def header?
       true
     end
+
+    # fact label?
+    def fact_header?
+      false
+    end
   end
 
 end

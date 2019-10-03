@@ -1,18 +1,18 @@
 module Summarize
   
   # Column header cell
-  class RowHCell < HCell
+  class HColHCell < ColHCell
 
     def header_header?
-      false
+      true
     end
 
     def column_header?
-      false
+      true
     end
     
     def row_header?
-      true
+      false
     end
   end
 

@@ -1,12 +1,13 @@
 module Summarize
 
   class Cell
-    # attr_reader :attr_names
-    attr_accessor :row, :col, :content
-    def initialize(row, col, content)
+    attr_accessor :row, :col, :content, :style, :last_and_summary
+
+    def initialize(row, col, content, style=nil)
       @row     = row
       @col     = col
       @content = content
+      @style   = style
     end
 
     def header?

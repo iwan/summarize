@@ -2,7 +2,7 @@ module Summarize
   
   class Element
     attr_reader :name, :label, :parent
-    attr_accessor :parent, :is_summary
+    attr_accessor :parent, :is_summary, :last
 
     def initialize(name, label=nil)
       @name   = name
